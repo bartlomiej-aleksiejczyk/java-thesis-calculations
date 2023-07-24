@@ -1,5 +1,6 @@
 package org.example.search;
 
+import org.example.makeMapForCalculations.SkyMap;
 import org.example.pojos.GaiaDataFrame;
 import org.example.pojos.LotssDataFrame;
 
@@ -31,6 +32,13 @@ public class NeightborSearchObject {
     ArrayList<Object> outputTransformHelper;
     double[] gaiaRaEResults;
     double[] gaiaDecEResults;
+    double[] rootColumn;
+    double[] rColumn;
+    double gaiaDensity;
+    double lotssDensity;
+    double[] gaiaDec;
+    double[] gaiaRa;
+
     CountDownLatch latch ;
 
     public NeightborSearchObject(GaiaDataFrame gaiaDataFrame, LotssDataFrame lotssDataFrame) {
@@ -46,13 +54,19 @@ public class NeightborSearchObject {
         closestNeightbourRa = new double[lenLotss];
         gaiaConvertedRa = new double[lenLotss];
         gaiaConvertedDec = new double[lenLotss];
+        gaiaRa = gaiaDataFrame.gaiaRa;
+        gaiaDec = gaiaDataFrame.gaiaDec;
         gaiaRaE = gaiaDataFrame.gaiaRaE;
         gaiaDecE = gaiaDataFrame.gaiaDecE;
         gaiaRaEResults = new double[lenLotss];
         gaiaDecEResults = new double[lenLotss];
         closestNeightbourDec = new double[lenLotss];
         closestNeightbourDistSec = new double[lenLotss];
+        rootColumn = new double[lenLotss];
+        rColumn = new double[lenLotss];
         latch = new CountDownLatch(lenLotss);
+        lotssDensity = new SkyMap(lotssDataFrame.lotssRa, lotssDataFrame.lotssDec).getDensity();
+        gaiaDensity = new SkyMap(gaiaRa,gaiaDec).getDensity();
         outputTransformHelper = new ArrayList<>(){
             {
                 add(lotssId);
@@ -64,8 +78,9 @@ public class NeightborSearchObject {
                 add(closestNeightbourDistSec);
                 add(lotssRaE);
                 add(lotssDecE);
-                add(gaiaRaEResults);
-                add(gaiaDecEResults);
+                add(rootColumn);
+                add(rColumn);
+
             }
         };
         finalMethodOutput = new String[outputTransformHelper.size()][lenLotss];
@@ -94,8 +109,6 @@ public class NeightborSearchObject {
 
 
     public void oneCalculationCycle(int lotssNum){
-        double[] gaiaRa = gaiaDataFrame.gaiaRa;
-        double[] gaiaDec = gaiaDataFrame.gaiaDec;
         double[] gaiaPmra = gaiaDataFrame.gaiaPmra;
         double[] gaiaPmdec = gaiaDataFrame.gaiaPmdec;
         String[] gaiaSourceId = gaiaDataFrame.gaiaSourceId;
@@ -122,6 +135,9 @@ public class NeightborSearchObject {
             }
 
         }
+
+
+
         closestNeightbourId[lotssNum] = gaiaSourceId[lowestIndex];
         closestNeightbourRa[lotssNum] = gaiaRa[lowestIndex];
         //System.out.println(gaiaRa[lowestIndex]);
@@ -132,13 +148,18 @@ public class NeightborSearchObject {
         closestNeightbourDistSec[lotssNum] = partialResult[lowestIndex];
         gaiaRaEResults[lotssNum] = gaiaRaE[lowestIndex];
         gaiaDecEResults[lotssNum] = gaiaDecE[lowestIndex];
+        //Czy coś robić z błędem
+
+
+
+        rootColumn[lotssNum] = Math.sqrt((((Math.pow((lotss_obj_ra- gaiaConvertedRa[lotssNum]),2))/12960000)/(Math.pow(lotssRaE[lotssNum],2)+Math.pow(gaiaRaEResults[lotssNum],2)))+(((Math.pow((lots_obj_dec- gaiaConvertedDec[lotssNum]),2))/12960000)/(Math.pow(lotssDecE[lotssNum],2)+Math.pow(gaiaDecEResults[lotssNum],2))));
+        rColumn[lotssNum]= Math.exp(-Math.PI*Math.pow(rootColumn[lotssNum],2)*Math.sqrt(Math.pow(lotssRaE[lotssNum],2)+Math.pow(gaiaRaEResults[lotssNum],2))*Math.sqrt(Math.pow(lotssDecE[lotssNum],2)+Math.pow(gaiaDecEResults[lotssNum],2))*lotssDensity);
         latch.countDown();
     }
 
     public String[][] searchForNeightbor() throws InterruptedException  {
         ExecutorService executor = Executors./*.newSingleThreadExecutor();*/newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         //while(latch.getCount()!=0) {
-
         for (int lotssNum1 = 0; lotssNum1 < lenLotss; lotssNum1++) {
             executor.execute(new taskForMultithread(lotssNum1));
         }

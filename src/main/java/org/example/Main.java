@@ -1,5 +1,6 @@
 package org.example;
 
+import org.example.makeMapForCalculations.SkyMap;
 import org.example.pojos.GaiaDataFrame;
 import org.example.pojos.LotssDataFrame;
 import org.example.search.NeightborSearchObject;
@@ -19,6 +20,9 @@ public class Main {
         NeightborSearchObject neightborSearchObject = new NeightborSearchObject(gaiaDataFrame, lotssDataFrame);
         String[][] resultNeighborSearch = neightborSearchObject.searchForNeightbor();
         saveObjectToCsv(resultNeighborSearch);
-
+/*        SkyMap skyMap = new SkyMap(lotssDataFrame.lotssRa, lotssDataFrame.lotssDec);
+        System.out.println(skyMap.getDensity());
+        SkyMap skyMap1 = new SkyMap(gaiaDataFrame.gaiaRa, gaiaDataFrame.gaiaDec);
+        System.out.println(skyMap1.getDensity());*/
     }
 }

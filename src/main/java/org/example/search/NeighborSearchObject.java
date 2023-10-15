@@ -1,8 +1,10 @@
 package org.example.search;
 
+import com.google.common.util.concurrent.AtomicDoubleArray;
 import org.example.makeMapForCalculations.SkyMap;
 import org.example.pojos.GaiaDataFrame;
 import org.example.pojos.LotssDataFrame;
+import org.example.pojos.ResultPojo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +12,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class NeightborSearchObject {
+public class NeighborSearchObject {
     private final GaiaDataFrame gaiaDataFrame;
     private final LotssDataFrame lotssDataFrame;
     private final int lenGaia;
@@ -41,7 +43,7 @@ public class NeightborSearchObject {
 
     CountDownLatch latch ;
 
-    public NeightborSearchObject(GaiaDataFrame gaiaDataFrame, LotssDataFrame lotssDataFrame) {
+    public NeighborSearchObject(GaiaDataFrame gaiaDataFrame, LotssDataFrame lotssDataFrame) {
         this.gaiaDataFrame = gaiaDataFrame;
         this.lotssDataFrame = lotssDataFrame;
         this.lenGaia = (gaiaDataFrame.gaiaDec).length;
@@ -66,7 +68,7 @@ public class NeightborSearchObject {
         rColumn = new double[lenLotss];
         latch = new CountDownLatch(lenLotss);
         lotssDensity = new SkyMap(lotssDataFrame.lotssRa, lotssDataFrame.lotssDec).getDensity();
-        gaiaDensity = new SkyMap(gaiaRa,gaiaDec).getDensity();
+        //gaiaDensity = new SkyMap(gaiaRa,gaiaDec).getDensity();
         outputTransformHelper = new ArrayList<>(){
             {
                 add(lotssId);
@@ -157,7 +159,9 @@ public class NeightborSearchObject {
         latch.countDown();
     }
 
-    public String[][] searchForNeightbor() throws InterruptedException  {
+    public ResultPojo searchForNeightbor() throws InterruptedException  {
+        String[] headers = new String[]{"lotssId","closestNeightbourId","closestNeightbourRa","closestNeightbourDec",
+        "gaiaConvertedRa","gaiaConvertedDec","closestNeightbourDistSec","lotssRaE","lotssDecE","rootColumn","rColumn"};
         ExecutorService executor = Executors./*.newSingleThreadExecutor();*/newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         //while(latch.getCount()!=0) {
         for (int lotssNum1 = 0; lotssNum1 < lenLotss; lotssNum1++) {
@@ -186,6 +190,7 @@ public class NeightborSearchObject {
                 finalMethodOutput[i] = outputTemp;
             }
         }
-        return finalMethodOutput;
+        AtomicDoubleArray arr = new AtomicDoubleArray(1333);
+        return new ResultPojo(headers, finalMethodOutput);
     }
 }
